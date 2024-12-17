@@ -58,6 +58,42 @@ def save_code(code):
         messagebox.showinfo("Сохранение", "Код успешно сохранён.")
 
 
+# Функция для загрузки кода из файла
+def load_code():
+    file_path = filedialog.askopenfilename(filetypes=[("Python Files", "*.py")])
+    if file_path:
+        with open(file_path, "r") as file:
+            return file.read()
+    return None
+
+
+# Функция для загрузки задач из файла
+def load_tasks_from_file():
+    file_path = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt")])
+    if file_path:
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                lines = file.readlines()
+                tasks = []
+                ccurrent_task = {}
+                for line in lines:
+                    line = line.strip()
+                    if line.startswith("#TASK_DESCRIPTION:"):
+                        ccurrent_task["description"] = line.replace("#TASK_DESCRIPTION:", "").strip()
+                    elif line.startswith("#TASK_THEORY:"):
+                        ccurrent_task["theory"] = line.replace("#TASK_THEORY:", "").strip()
+                    elif line.startswith("#TASK_TEMPLATE:"):
+                        ccurrent_task["template"] = line.replace("#TASK_TEMPLATE:", "").strip()
+                    elif line.startswith("#END_TASK"):
+                        ccurrent_task["validation"] = lambda local_vars: isinstance(local_vars.get('result'), np.ndarray)
+                        tasks.append(ccurrent_task)
+                        ccurrent_task = {}
+                return tasks
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при загрузке задач: {str(e)}")
+    return []
+
+
 # Функция запуска тренажёра
 def run_trainer():
     global TASKS
@@ -75,12 +111,15 @@ def run_trainer():
         user_code = code_text.get("1.0", tk.END)
         save_code(user_code)
 
+    def load_saved_code():
+        loaded_code = load_code()
+        if loaded_code:
+            code_text.delete("1.0", tk.END)
+            code_text.insert("1.0", loaded_code)
+
     # Создание окна
     root = tk.Tk()
     root.title("Учебный тренажёр по нечёткой логике")
-
-    # Список задач
-
 
 
 
@@ -118,7 +157,8 @@ def run_trainer():
 
     save_button = ttk.Button(button_frame, text="Сохранить код", command=save_current_code)
     save_button.grid(row=0, column=2, padx=5)
-
+    load_button = ttk.Button(button_frame, text="Загрузить код", command=load_saved_code)
+    load_button.grid(row=0, column=3, padx=5)
     root.mainloop()
 
 if __name__ == "__main__":
