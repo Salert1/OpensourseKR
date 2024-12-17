@@ -98,6 +98,18 @@ def load_tasks_from_file():
 def run_trainer():
     global TASKS
 
+    def change_task(task_index):
+        current_task = TASKS[task_index]
+        global index_task
+        index_task = task_index
+        reset_code()
+        theory_text.configure(state="normal")
+        theory_text.delete("1.0", tk.END)
+        theory_text.insert("1.0", current_task["theory"])
+        theory_text.configure(state="disabled")
+        task_text.configure(text=current_task["description"])
+        code_text.delete("1.0", tk.END)
+        code_text.insert("1.0", current_task["template"])
 
     def submit_code():
         user_code = code_text.get("1.0", tk.END)
@@ -117,11 +129,30 @@ def run_trainer():
             code_text.delete("1.0", tk.END)
             code_text.insert("1.0", loaded_code)
 
+    def load_tasks():
+        # nonlocal TASKS
+        new_tasks = load_tasks_from_file()
+        if new_tasks:
+            for i in new_tasks:
+                TASKS.append(i)
+            task_selector["values"] = [f"Задача {i + 1}" for i in range(len(TASKS))]
+            task_selector.current(0)
+            change_task(0)
+
     # Создание окна
     root = tk.Tk()
     root.title("Учебный тренажёр по нечёткой логике")
 
+    # Список задач
+    task_selector_label = ttk.Label(root, text="Выберите задачу:", font=("Arial", 12))
+    task_selector_label.pack(pady=5)
+    task_selector = ttk.Combobox(root, values=[f"Задача {i + 1}" for i in range(len(TASKS))])
+    task_selector.current(0)
+    task_selector.pack(pady=5)
+    task_selector.bind("<<ComboboxSelected>>", lambda e: change_task(task_selector.current()))
 
+    load_tasks_button = ttk.Button(root, text="Загрузить задачи из файла", command=load_tasks)
+    load_tasks_button.pack(pady=5)
 
     # Теория
     theory_label = ttk.Label(root, text="Теория:", font=("Arial", 14, "bold"))
